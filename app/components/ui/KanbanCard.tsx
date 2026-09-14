@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Task, Priority } from '@/app/types/types';
 import { useProject } from '@/app/context/ProjectProvider';
+import { ISSUE_TYPE_META } from '@/app/lib/issue-type';
 
 interface KanbanCardProps {
   task: Task;
@@ -217,6 +218,21 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({ task, index }) => {
           </div>
         </div>
 
+        {/* Issue type + code (Jira-style: "🐞 MKT-42") */}
+        <div className="flex items-center gap-1.5 text-[10px] text-[#9E9082]">
+          {(() => {
+            const meta = ISSUE_TYPE_META[task.issueType];
+            const TypeIcon = meta.icon;
+            return (
+              <TypeIcon
+                className="w-3.5 h-3.5 flex-shrink-0"
+                style={{ color: meta.color }}
+              />
+            );
+          })()}
+          {task.code && <span className="font-mono-data">{task.code}</span>}
+        </div>
+
         {/* Task Title */}
         <h3 className="font-sans-ui text-xs sm:text-sm font-semibold text-[#2C2723] dark:text-[#EDE8E1] leading-snug group-hover:text-[#8C6B4F] dark:group-hover:text-[#D4B89D] transition-colors line-clamp-2">
           {task.title}
@@ -230,6 +246,10 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({ task, index }) => {
         )}
 
         {/* Bottom Metadata: Due Date, Estimate, Comments, Assignees */}
+        {(dueDateStatus ||
+          task.estimate ||
+          task.activities.length > 0 ||
+          task.assignees.length > 0) && (
         <div className="pt-2 border-t border-[#EFE8DE]/90 dark:border-[#28211A] flex items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-1.5 flex-wrap">
             {/* Due date */}
@@ -278,6 +298,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({ task, index }) => {
             ))}
           </div>
         </div>
+        )}
       </div>
     </div>
   );

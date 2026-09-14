@@ -38,4 +38,36 @@ export const authService = {
     const res = await apiClient.get<User>("/auth/profile");
     return res.data;
   },
+
+  async forgotPassword(payload: { email: string }) {
+    const res = await apiClient.post<{ message: string }>(
+      "/auth/forgot-password",
+      payload,
+    );
+    return res.data;
+  },
+
+  async resetPassword(payload: { token: string; password: string }) {
+    const res = await apiClient.post<{ message: string }>(
+      "/auth/reset-password",
+      payload,
+    );
+    return res.data;
+  },
+
+  async updateProfile(payload: { name?: string }) {
+    const res = await apiClient.patch<User>("/auth/profile", payload);
+    return res.data;
+  },
+
+  async changePassword(payload: {
+    currentPassword: string;
+    newPassword: string;
+  }) {
+    const res = await apiClient.post<{ message: string }>(
+      "/auth/change-password",
+      payload,
+    );
+    return res.data;
+  },
 };

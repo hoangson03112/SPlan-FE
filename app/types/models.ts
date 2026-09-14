@@ -44,12 +44,17 @@ export interface Space {
   workspaceId: string;
   name: string;
   slug: string;
+  key: string;
+  itemSeq: number;
   icon?: string | null;
   color?: string | null;
   description?: string | null;
   category?: string | null;
   createdAt: string;
   lists?: ListSummary[];
+  // Only present on the getSpacesByWorkspace list endpoint.
+  itemsCount?: number;
+  completedItemsCount?: number;
 }
 
 export interface List extends ListSummary {
@@ -79,6 +84,7 @@ export interface Status {
 export interface Item {
   id: string;
   listId: string;
+  number?: number | null;
   data: Record<string, unknown>;
   title: string;
   statusId?: string | null;

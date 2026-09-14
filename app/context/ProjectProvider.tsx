@@ -8,6 +8,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { useParams, useRouter } from "next/navigation";
 import {
   Board,
   Column,
@@ -20,7 +21,10 @@ import {
   Language,
   Priority,
   ThemeMode,
+  IssueType,
+  CreateIssueInput,
 } from "../types/types";
+import { Field, FieldType } from "../types/models";
 import { TRANSLATIONS } from "../i18n";
 import { useCurrentUser } from "@/app/hooks/use-auth";
 import {
@@ -46,6 +50,12 @@ import {
   useItems,
   useUpdateItem,
 } from "@/app/hooks/use-items";
+import {
+  useCreateField,
+  useDeleteField,
+  useFields,
+  useUpdateField,
+} from "@/app/hooks/use-fields";
 import { UpdateSpacePayload } from "@/app/services/space.service";
 import { UpdateStatusPayload } from "@/app/services/status.service";
 import { UpdateItemPayload } from "@/app/services/item.service";
@@ -115,6 +125,34 @@ interface ProjectContextType {
   setIsFilterDrawerOpen: (open: boolean) => void;
   isNewBoardModalOpen: boolean;
   setIsNewBoardModalOpen: (open: boolean) => void;
+  isCreateIssueModalOpen: boolean;
+  setIsCreateIssueModalOpen: (open: boolean) => void;
+  /** Column to preselect the next time the create-issue modal opens — set
+   * by a column's own "+" button so it opens straight into that status,
+   * instead of always defaulting to the first column. */
+  createIssueDefaultColumnId: string | null;
+  setCreateIssueDefaultColumnId: (columnId: string | null) => void;
+  isCustomFieldsModalOpen: boolean;
+  setIsCustomFieldsModalOpen: (open: boolean) => void;
+  isMembersModalOpen: boolean;
+  setIsMembersModalOpen: (open: boolean) => void;
+
+  fields: Field[];
+  createField: (input: {
+    name: string;
+    type: FieldType;
+    config?: Record<string, unknown>;
+  }) => void;
+  updateFieldDef: (
+    fieldId: string,
+    updates: Partial<{
+      name: string;
+      type: FieldType;
+      config: Record<string, unknown>;
+      isHidden: boolean;
+    }>,
+  ) => void;
+  deleteFieldDef: (fieldId: string) => void;
 
   filteredTasks: Task[];
   getTasksByColumn: (columnId: string) => Task[];
@@ -135,7 +173,13 @@ interface ProjectContextType {
   updateColumn: (columnId: string, updates: Partial<Column>) => void;
   deleteColumn: (columnId: string) => void;
 
-  addTask: (columnId: string, title: string, priority?: Priority) => void;
+  addTask: (
+    columnId: string,
+    title: string,
+    priority?: Priority,
+    issueType?: IssueType,
+  ) => void;
+  createIssue: (input: CreateIssueInput) => void;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   deleteTask: (taskId: string) => void;
   duplicateTask: (taskId: string) => void;
@@ -167,6 +211,8 @@ const PLACEHOLDER_WORKSPACE: Workspace = {
 const PLACEHOLDER_BOARD: Board = {
   id: "",
   workspaceId: "",
+  slug: "",
+  key: "",
   title: "",
   description: "",
   icon: "📋",
@@ -181,6 +227,14 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const { data: currentUser } = useCurrentUser();
 
+  // Route params drive selection whenever the current page names a
+  // workspace/board slug (/workspaces/[slug] and .../boards/[boardSlug]);
+  // the override state below only covers the gap between a click and the
+  // navigation it triggers, and the `/workspaces` picker page itself (no
+  // slug in the URL there).
+  const params = useParams<{ slug?: string; boardSlug?: string }>();
+  const router = useRouter();
+
   // ---- Workspace level -----------------------------------------------
   const { data: realWorkspaces } = useMyWorkspaces();
   const workspaces = useMemo(
@@ -191,42 +245,95 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
   // `null` means "no explicit choice yet" — derive from the loaded data
   // instead of syncing it in an effect, so there's nothing to do once the
   // workspaces/boards queries resolve.
-  const [workspaceIdOverride, setWorkspaceIdOverride] = useState<
-    string | null
-  >(null);
+  const [workspaceIdOverride, setWorkspaceIdOverride] = useState<string | null>(
+    null,
+  );
   const [boardIdOverride, setBoardIdOverride] = useState<string | null>(null);
-  const [isWorkspaceSelectorOpen, setIsWorkspaceSelectorOpen] = useState(true);
+  // `null` = "follow the route": open on the bare `/workspaces` picker,
+  // closed on any page that names a workspace slug. Explicit true/false
+  // (from the Navbar's "Đổi" button / picking a workspace) overrides that
+  // without needing a navigation, since the selector is an overlay on top
+  // of whatever board route is currently active.
+  //
+  // The override is tagged with the `boardSlug` it was set for. Landing on
+  // a *different* board's URL (a real navigation, e.g. clicking a board
+  // link) makes the tag stale, so it's ignored and the state falls back to
+  // "follow the route" — otherwise, once the selector was opened even once
+  // (e.g. via "Đổi"), every later board link would keep reopening it
+  // instead of showing the board the user just clicked.
+  const [selectorOverride, setSelectorOverride] = useState<{
+    value: boolean;
+    forBoardSlug: string | undefined;
+  } | null>(null);
+  const isWorkspaceSelectorOpen =
+    selectorOverride && selectorOverride.forBoardSlug === params?.boardSlug
+      ? selectorOverride.value
+      : !params?.slug;
+  const setIsWorkspaceSelectorOpen = useCallback(
+    (open: boolean) => {
+      setSelectorOverride({ value: open, forBoardSlug: params?.boardSlug });
+    },
+    [params?.boardSlug],
+  );
   const [alwaysShowWorkspaceSelector, setAlwaysShowWorkspaceSelector] =
     useState(false);
 
-  const activeWorkspaceId = workspaceIdOverride ?? workspaces[0]?.id ?? "";
+  const workspaceFromRoute = params?.slug
+    ? workspaces.find((w) => w.slug === params.slug)
+    : undefined;
+
+  const activeWorkspaceId =
+    workspaceFromRoute?.id ?? workspaceIdOverride ?? workspaces[0]?.id ?? "";
 
   const activeWorkspace =
+    workspaceFromRoute ??
     workspaces.find((w) => w.id === activeWorkspaceId) ??
     workspaces[0] ??
     PLACEHOLDER_WORKSPACE;
 
-  const setActiveWorkspaceId = useCallback((id: string) => {
-    setWorkspaceIdOverride(id);
-    setBoardIdOverride(null);
-  }, []);
+  const setActiveWorkspaceId = useCallback(
+    (id: string) => {
+      setWorkspaceIdOverride(id);
+      setBoardIdOverride(null);
+      const ws = workspaces.find((w) => w.id === id);
+      if (ws) router.push(`/workspaces/${ws.slug}`);
+    },
+    [workspaces, router],
+  );
 
-  const selectWorkspace = useCallback((id: string) => {
-    setWorkspaceIdOverride(id);
-    setBoardIdOverride(null);
-    setIsWorkspaceSelectorOpen(false);
-  }, []);
+  const selectWorkspace = useCallback(
+    (id: string) => {
+      setWorkspaceIdOverride(id);
+      setBoardIdOverride(null);
+      setIsWorkspaceSelectorOpen(false);
+      const ws = workspaces.find((w) => w.id === id);
+      if (ws) router.push(`/workspaces/${ws.slug}`);
+    },
+    [workspaces, router, setIsWorkspaceSelectorOpen],
+  );
 
   // ---- Board (= Space) level -------------------------------------------
   const { data: realSpaces } = useSpaces(activeWorkspaceId);
   const spaces = useMemo(() => realSpaces ?? [], [realSpaces]);
   const boards = useMemo(() => spaces.map(mapBoard), [spaces]);
 
-  const activeBoardId = boardIdOverride ?? boards[0]?.id ?? "";
+  const boardFromRoute = params?.boardSlug
+    ? boards.find((b) => b.slug === params.boardSlug)
+    : undefined;
 
-  const setActiveBoardId = useCallback((boardId: string) => {
-    setBoardIdOverride(boardId);
-  }, []);
+  const activeBoardId =
+    boardFromRoute?.id ?? boardIdOverride ?? boards[0]?.id ?? "";
+
+  const setActiveBoardId = useCallback(
+    (boardId: string) => {
+      setBoardIdOverride(boardId);
+      const board = boards.find((b) => b.id === boardId);
+      if (board && activeWorkspace.slug) {
+        router.push(`/workspaces/${activeWorkspace.slug}/boards/${board.slug}`);
+      }
+    },
+    [boards, activeWorkspace.slug, router],
+  );
 
   const activeBoard =
     boards.find((b) => b.id === activeBoardId) ??
@@ -241,6 +348,10 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     () => (realStatuses ?? []).map((s) => mapColumn(s, activeBoard.id)),
     [realStatuses, activeBoard.id],
   );
+
+  // ---- Custom fields (per-board field definitions) -----------------------
+  const { data: realFields } = useFields(listId);
+  const fields = useMemo(() => realFields ?? [], [realFields]);
 
   // ---- Members (workspace members) --------------------------------------
   const { data: realMembers } = useWorkspaceMembers(activeWorkspaceId);
@@ -275,8 +386,10 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
   const { data: realItems } = useItems(listId);
   const tasks = useMemo(
     () =>
-      (realItems ?? []).map((item) => mapItemToTask(item, activeBoard.id, members)),
-    [realItems, activeBoard.id, members],
+      (realItems ?? []).map((item) =>
+        mapItemToTask(item, activeBoard.id, members, activeBoard.key),
+      ),
+    [realItems, activeBoard.id, activeBoard.key, members],
   );
 
   // ---- UI-only state ------------------------------------------------------
@@ -288,6 +401,11 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [isNewBoardModalOpen, setIsNewBoardModalOpen] = useState(false);
+  const [isCreateIssueModalOpen, setIsCreateIssueModalOpen] = useState(false);
+  const [createIssueDefaultColumnId, setCreateIssueDefaultColumnId] =
+    useState<string | null>(null);
+  const [isCustomFieldsModalOpen, setIsCustomFieldsModalOpen] = useState(false);
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     searchQuery: "",
     priorities: [],
@@ -329,7 +447,12 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
         const matchesAssignee = task.assignees.some((a) =>
           a.name.toLowerCase().includes(query),
         );
-        if (!matchesTitle && !matchesDesc && !matchesLabel && !matchesAssignee) {
+        if (
+          !matchesTitle &&
+          !matchesDesc &&
+          !matchesLabel &&
+          !matchesAssignee
+        ) {
           return false;
         }
       }
@@ -383,6 +506,9 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
   const createItemMutation = useCreateItem(listId);
   const updateItemMutation = useUpdateItem(listId);
   const deleteItemMutation = useDeleteItem(listId);
+  const createFieldMutation = useCreateField(listId);
+  const updateFieldMutation = useUpdateField(listId);
+  const deleteFieldMutation = useDeleteField(listId);
 
   const createWorkspace = useCallback(
     (name: string) => {
@@ -390,10 +516,11 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
         onSuccess: (ws) => {
           setWorkspaceIdOverride(ws.id);
           setBoardIdOverride(null);
+          router.push(`/workspaces/${ws.slug}`);
         },
       });
     },
-    [createWorkspaceMutation],
+    [createWorkspaceMutation, router],
   );
 
   const addBoard = useCallback(
@@ -406,10 +533,19 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     ) => {
       createSpaceMutation.mutate(
         { name: title, description, icon, color: backgroundStyle, category },
-        { onSuccess: (space) => setBoardIdOverride(space.id) },
+        {
+          onSuccess: (space) => {
+            setBoardIdOverride(space.id);
+            if (activeWorkspace.slug) {
+              router.push(
+                `/workspaces/${activeWorkspace.slug}/boards/${space.slug}`,
+              );
+            }
+          },
+        },
       );
     },
-    [createSpaceMutation],
+    [createSpaceMutation, activeWorkspace.slug, router],
   );
 
   const updateBoard = useCallback(
@@ -449,7 +585,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     (columnId: string, updates: Partial<Column>) => {
       const payload: UpdateStatusPayload = {};
       if (updates.title !== undefined) payload.name = updates.title;
-      if (updates.colorAccent !== undefined) payload.color = updates.colorAccent;
+      if (updates.colorAccent !== undefined)
+        payload.color = updates.colorAccent;
       updateStatusMutation.mutate({ statusId: columnId, payload });
     },
     [updateStatusMutation],
@@ -463,7 +600,12 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const addTask = useCallback(
-    (columnId: string, title: string, priority: Priority = "medium") => {
+    (
+      columnId: string,
+      title: string,
+      priority: Priority = "medium",
+      issueType: IssueType = "task",
+    ) => {
       const tasksInColumn = tasks.filter((tk) => tk.columnId === columnId);
       const maxOrder = tasksInColumn.reduce(
         (max, tk) => Math.max(max, tk.order),
@@ -473,10 +615,63 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
         title,
         statusId: columnId,
         kanbanOrder: maxOrder + 1,
-        data: { priority },
+        data: { priority, issueType },
       });
     },
     [tasks, createItemMutation],
+  );
+
+  const createIssue = useCallback(
+    (input: CreateIssueInput) => {
+      const tasksInColumn = tasks.filter((tk) => tk.columnId === input.columnId);
+      const maxOrder = tasksInColumn.reduce(
+        (max, tk) => Math.max(max, tk.order),
+        -1,
+      );
+      createItemMutation.mutate({
+        title: input.title,
+        statusId: input.columnId,
+        kanbanOrder: maxOrder + 1,
+        data: {
+          description: input.description ?? "",
+          issueType: input.issueType,
+          priority: input.priority,
+          assigneeIds: input.assigneeIds ?? [],
+          dueDate: input.dueDate,
+          customFields: input.customFields ?? {},
+        },
+      });
+    },
+    [tasks, createItemMutation],
+  );
+
+  const createField = useCallback(
+    (input: { name: string; type: FieldType; config?: Record<string, unknown> }) => {
+      createFieldMutation.mutate(input);
+    },
+    [createFieldMutation],
+  );
+
+  const updateFieldDef = useCallback(
+    (
+      fieldId: string,
+      updates: Partial<{
+        name: string;
+        type: FieldType;
+        config: Record<string, unknown>;
+        isHidden: boolean;
+      }>,
+    ) => {
+      updateFieldMutation.mutate({ fieldId, payload: updates });
+    },
+    [updateFieldMutation],
+  );
+
+  const deleteFieldDef = useCallback(
+    (fieldId: string) => {
+      deleteFieldMutation.mutate(fieldId);
+    },
+    [deleteFieldMutation],
   );
 
   const updateTask = useCallback(
@@ -528,7 +723,10 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
         .sort((a, b) => a.order - b.order);
 
       let newOrder: number;
-      if (targetIndex === undefined || targetIndex >= targetColumnTasks.length) {
+      if (
+        targetIndex === undefined ||
+        targetIndex >= targetColumnTasks.length
+      ) {
         newOrder = midpointOrder(
           targetColumnTasks[targetColumnTasks.length - 1]?.order,
           undefined,
@@ -632,6 +830,19 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsFilterDrawerOpen,
     isNewBoardModalOpen,
     setIsNewBoardModalOpen,
+    isCreateIssueModalOpen,
+    setIsCreateIssueModalOpen,
+    createIssueDefaultColumnId,
+    setCreateIssueDefaultColumnId,
+    isCustomFieldsModalOpen,
+    setIsCustomFieldsModalOpen,
+    isMembersModalOpen,
+    setIsMembersModalOpen,
+
+    fields,
+    createField,
+    updateFieldDef,
+    deleteFieldDef,
 
     filteredTasks,
     getTasksByColumn,
@@ -645,6 +856,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     updateColumn,
     deleteColumn,
     addTask,
+    createIssue,
     updateTask,
     deleteTask,
     duplicateTask,
@@ -652,7 +864,9 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     addComment,
   };
 
-  return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;
+  return (
+    <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>
+  );
 };
 
 export const useProject = () => {

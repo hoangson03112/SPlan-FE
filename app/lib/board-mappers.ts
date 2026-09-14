@@ -15,6 +15,7 @@ import {
   WorkspacePlan,
   WorkspaceRole,
   Priority,
+  IssueType,
 } from "@/app/types/types";
 import { getAvatarUrl } from "./avatar";
 import { resolveLabels } from "./labels";
@@ -95,6 +96,8 @@ export function mapBoard(space: Space): Board {
   return {
     id: space.id,
     workspaceId: space.workspaceId,
+    slug: space.slug,
+    key: space.key,
     title: space.name,
     description: space.description ?? "",
     icon: space.icon ?? "📋",
@@ -104,6 +107,8 @@ export function mapBoard(space: Space): Board {
       : "paper-white",
     columnIds: [],
     createdAt: space.createdAt,
+    itemsCount: space.itemsCount,
+    completedItemsCount: space.completedItemsCount,
   };
 }
 
@@ -114,6 +119,7 @@ export function mapColumn(status: RealStatus, boardId: string): Column {
     boardId,
     colorAccent: status.color,
     order: status.position,
+    group: status.group,
   };
 }
 
@@ -132,6 +138,7 @@ export function mapMember(wm: WorkspaceMemberWithUser): Member {
  * free-form JSON blob, this is our own client-side convention for it. */
 export interface ItemDataShape {
   description?: string;
+  issueType?: IssueType;
   priority?: Priority;
   assigneeIds?: string[];
   labelIds?: string[];
@@ -140,6 +147,7 @@ export interface ItemDataShape {
   estimate?: string;
   coverImage?: string;
   coverColor?: string;
+  customFields?: Record<string, unknown>;
   activities?: {
     id: string;
     authorId: string;
@@ -157,6 +165,7 @@ export interface ItemDataShape {
 export function taskToItemData(task: Task): ItemDataShape {
   return {
     description: task.description,
+    issueType: task.issueType,
     priority: task.priority,
     assigneeIds: task.assignees.map((a) => a.id),
     labelIds: task.labels.map((l) => l.id),
@@ -165,6 +174,7 @@ export function taskToItemData(task: Task): ItemDataShape {
     estimate: task.estimate,
     coverImage: task.coverImage,
     coverColor: task.coverColor,
+    customFields: task.customFields,
     activities: task.activities.map((a) => ({
       id: a.id,
       authorId: a.author.id,
@@ -181,6 +191,7 @@ export function mapItemToTask(
   item: RealItem,
   boardId: string,
   members: Member[],
+  boardKey?: string,
 ): Task {
   const data = (item.data ?? {}) as ItemDataShape;
   const assignees = (data.assigneeIds ?? [])
@@ -190,6 +201,10 @@ export function mapItemToTask(
   return {
     id: item.id,
     boardId,
+    number: item.number ?? undefined,
+    code:
+      boardKey && item.number != null ? `${boardKey}-${item.number}` : undefined,
+    issueType: data.issueType ?? "task",
     columnId: item.statusId ?? "",
     title: item.title,
     description: data.description ?? "",
@@ -202,6 +217,7 @@ export function mapItemToTask(
     estimate: data.estimate,
     coverImage: data.coverImage,
     coverColor: data.coverColor,
+    customFields: data.customFields ?? {},
     activities: (data.activities ?? []).map((a) => ({
       id: a.id,
       author: {

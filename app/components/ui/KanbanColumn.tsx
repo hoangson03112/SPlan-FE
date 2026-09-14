@@ -1,13 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  Plus, 
-  MoreHorizontal, 
-  Trash2, 
-  Edit2, 
-  X,
-  Palette
+import {
+  Plus,
+  MoreHorizontal,
+  Trash2,
+  Edit2,
 } from 'lucide-react';
 import { Column } from '@/app/types/types';
 import { useProject } from '@/app/context/ProjectProvider';
@@ -20,16 +18,15 @@ interface KanbanColumnProps {
 export const KanbanColumn: React.FC<KanbanColumnProps> = ({ column }) => {
   const {
     getTasksByColumn,
-    addTask,
+    setIsCreateIssueModalOpen,
+    setCreateIssueDefaultColumnId,
     updateColumn,
     deleteColumn,
     moveTask,
     t,
-    language
+    language,
   } = useProject();
 
-  const [isAddingCard, setIsAddingCard] = useState(false);
-  const [newCardTitle, setNewCardTitle] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -37,13 +34,9 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({ column }) => {
 
   const tasksInColumn = getTasksByColumn(column.id);
 
-  const handleAddCardSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (newCardTitle.trim()) {
-      addTask(column.id, newCardTitle.trim());
-      setNewCardTitle('');
-      setIsAddingCard(false);
-    }
+  const openCreateIssueForThisColumn = () => {
+    setCreateIssueDefaultColumnId(column.id);
+    setIsCreateIssueModalOpen(true);
   };
 
   const handleTitleSubmit = () => {
@@ -94,7 +87,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({ column }) => {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`w-72 sm:w-80 flex-shrink-0 flex flex-col rounded-3xl border transition-all duration-200 max-h-full ${
+      className={`w-72 sm:w-80 flex-shrink-0 flex flex-col rounded-3xl border transition-all duration-200 h-full ${
         isDragOver
           ? 'bg-[#EFE7DC]/95 dark:bg-[#251E18]/95 border-[#8C6B4F] shadow-lg ring-2 ring-[#8C6B4F]/25'
           : 'bg-[#FAF7F2]/80 dark:bg-[#181411]/80 backdrop-blur-md border-[#E5DFD5]/90 dark:border-[#2C241D]/90 shadow-[0_4px_24px_-4px_rgba(44,39,35,0.04)]'
@@ -143,7 +136,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({ column }) => {
         {/* Header Actions: Quick Add & Options Menu */}
         <div className="flex items-center gap-1">
           <button
-            onClick={() => setIsAddingCard(true)}
+            onClick={openCreateIssueForThisColumn}
             className="p-1 rounded-xl text-[#7E7163] hover:text-[#2C2723] dark:hover:text-[#EDE8E1] hover:bg-[#EDE5D8] dark:hover:bg-[#28211A] transition-colors"
             title={t.newCard}
           >
@@ -218,71 +211,23 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({ column }) => {
           <KanbanCard key={task.id} task={task} index={idx} />
         ))}
 
-        {tasksInColumn.length === 0 && !isAddingCard && (
+        {tasksInColumn.length === 0 && (
           <div className="py-10 text-center border-2 border-dashed border-[#E5DFD5] dark:border-[#2C241D] rounded-2xl text-[#9E9082] text-xs select-none">
             {language === 'vi' ? 'Thả công việc vào đây' : 'Drop cards here'}
           </div>
         )}
-
-        {/* Inline Card Creator Form */}
-        {isAddingCard && (
-          <form
-            onSubmit={handleAddCardSubmit}
-            className="p-3 rounded-2xl bg-white dark:bg-[#201B17] border border-[#8C6B4F] shadow-sm space-y-2 animate-in fade-in zoom-in-95 duration-150"
-          >
-            <textarea
-              placeholder={t.cardTitlePlaceholder}
-              value={newCardTitle}
-              onChange={(e) => setNewCardTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleAddCardSubmit();
-                }
-                if (e.key === 'Escape') {
-                  setIsAddingCard(false);
-                  setNewCardTitle('');
-                }
-              }}
-              rows={2}
-              autoFocus
-              className="w-full bg-transparent text-xs sm:text-sm text-[#2C2723] dark:text-[#EDE8E1] placeholder-[#9E9082] outline-none resize-none leading-relaxed"
-            />
-            <div className="flex items-center justify-end gap-1.5 pt-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsAddingCard(false);
-                  setNewCardTitle('');
-                }}
-                className="px-2.5 py-1 rounded-lg text-[#7E7163] hover:text-[#2C2723] dark:hover:text-[#EDE8E1] text-xs"
-              >
-                {t.cancel}
-              </button>
-              <button
-                type="submit"
-                disabled={!newCardTitle.trim()}
-                className="px-3 py-1 rounded-xl bg-[#2C2723] dark:bg-[#EDE8E1] text-[#FAF8F5] dark:text-[#1A1613] text-xs font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity"
-              >
-                {language === 'vi' ? 'Tạo thẻ' : 'Add Card'}
-              </button>
-            </div>
-          </form>
-        )}
       </div>
 
-      {/* Column Footer: Quick Add Button */}
-      {!isAddingCard && (
-        <div className="p-2.5 border-t border-[#EAE3D8]/80 dark:border-[#28211A]/80">
-          <button
-            onClick={() => setIsAddingCard(true)}
-            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-2xl text-xs font-medium text-[#7E7163] dark:text-[#B5AAA0] hover:bg-white dark:hover:bg-[#221C16] hover:text-[#2C2723] dark:hover:text-[#EDE8E1] border border-dashed border-[#DDD3C3] dark:border-[#382E25] transition-all"
-          >
-            <Plus className="w-3.5 h-3.5 text-[#8C6B4F]" />
-            <span>{t.newCard}</span>
-          </button>
-        </div>
-      )}
+      {/* Column Footer: opens the full Create Issue modal, preselected to this status */}
+      <div className="p-2.5 border-t border-[#EAE3D8]/80 dark:border-[#28211A]/80">
+        <button
+          onClick={openCreateIssueForThisColumn}
+          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-2xl text-xs font-medium text-[#7E7163] dark:text-[#B5AAA0] hover:bg-white dark:hover:bg-[#221C16] hover:text-[#2C2723] dark:hover:text-[#EDE8E1] border border-dashed border-[#DDD3C3] dark:border-[#382E25] transition-all"
+        >
+          <Plus className="w-3.5 h-3.5 text-[#8C6B4F]" />
+          <span>{t.newCard}</span>
+        </button>
+      </div>
     </div>
   );
 };

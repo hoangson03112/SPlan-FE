@@ -1,38 +1,48 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
-  Kanban,
-  ListTodo,
-  CalendarClock,
-  BarChart3,
   Search,
   SlidersHorizontal,
   Plus,
   Download,
   RotateCcw,
-  ChevronDown,
+  ChevronRight,
   Sun,
   Moon,
-  Check,
-  Sparkles,
   Maximize2,
   Minimize2,
-  Building2,
-  ExternalLink,
+  Menu,
+  Settings,
+  LogOut,
 } from "lucide-react";
 import { useProject } from "@/app/context/ProjectProvider";
-import { ViewMode } from "@/app/types/types";
+import { useCurrentUser, useLogout } from "@/app/hooks/use-auth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  /** Opens the mobile sidebar drawer — the Board/Backlog/Table/Timeline
+   * switcher moved into ProjectSidebar, which is desktop-only, so mobile
+   * needs this hamburger to reach it at all. */
+  onOpenMobileSidebar?: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileSidebar }) => {
+  const router = useRouter();
+  const { data: currentUser } = useCurrentUser();
+  const logout = useLogout();
   const {
     activeWorkspace,
     setIsWorkspaceSelectorOpen,
-    boards,
     activeBoard,
-    setActiveBoardId,
-    viewMode,
-    setViewMode,
     language,
     setLanguage,
     themeMode,
@@ -42,13 +52,9 @@ export const Navbar: React.FC = () => {
     filterOptions,
     setIsCommandPaletteOpen,
     setIsFilterDrawerOpen,
-    setIsNewBoardModalOpen,
-    addTask,
-    columns,
+    setIsCreateIssueModalOpen,
     t,
   } = useProject();
-
-  const [isBoardDropdownOpen, setIsBoardDropdownOpen] = React.useState(false);
 
   // Count active filters
   const activeFilterCount =
@@ -58,180 +64,29 @@ export const Navbar: React.FC = () => {
     (filterOptions.hasDueDateOnly ? 1 : 0) +
     (filterOptions.searchQuery ? 1 : 0);
 
-  const handleQuickAdd = () => {
-    if (columns.length > 0) {
-      addTask(columns[0].id, language === 'vi' ? 'Công việc mới' : 'New Task');
-    }
-  };
-
-  const navItems: {
-    id: ViewMode;
-    label: string;
-    icon: React.FC<{ className?: string }>;
-  }[] = [
-    { id: "kanban", label: t.kanbanView, icon: Kanban },
-    { id: "table", label: t.tableView, icon: ListTodo },
-    { id: "timeline", label: t.timelineView, icon: CalendarClock },
-    { id: "analytics", label: t.analyticsView, icon: BarChart3 },
-  ];
-
   return (
     <header className="sticky top-0 z-30 border-b border-[#E8E2D8]/80 dark:border-[#2A241F]/80 bg-[#FAF8F5]/85 dark:bg-[#141210]/85 backdrop-blur-xl px-3.5 sm:px-6 py-2.5 transition-colors duration-200">
       <div className="flex items-center justify-between gap-2 sm:gap-4 max-w-9xl mx-auto">
-        {/* Left Section: Board Selector & Collection */}
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          {/* Active Workspace Selector Trigger */}
+        {/* Left: mobile menu (reaches ProjectSidebar, hidden on mobile) + breadcrumb */}
+        <div className="flex items-center gap-1.5 min-w-0 text-xs sm:text-sm">
           <button
-            id="navbar-workspace-hub-btn"
-            onClick={() => setIsWorkspaceSelectorOpen(true)}
-            className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 rounded-2xl border border-[#DDD3C3] dark:border-[#382F26] bg-[#F4EDE3] dark:bg-[#1E1915] hover:bg-[#EFE5D6] dark:hover:bg-[#28211B] text-[#5A4D41] dark:text-[#CBBDB0] text-xs font-semibold shadow-2xs transition-all hover:scale-[1.02] group"
-            title="Mở màn hình chọn không gian làm việc (Workspace Hub)"
+            onClick={onOpenMobileSidebar}
+            className="md:hidden p-1.5 -ml-1 rounded-xl text-[#7C7063] dark:text-[#8E8377] hover:bg-[#F2ECE3] dark:hover:bg-[#1E1915] flex-shrink-0"
+            title="Menu"
           >
-            <span className="text-sm flex-shrink-0">
-              {activeWorkspace.icon}
-            </span>
-            <span className="max-w-[85px] sm:max-w-[130px] truncate font-editorial">
-              {activeWorkspace.name}
-            </span>
-            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#E5DACB] dark:bg-[#2D241C] text-[#8C6B4F] dark:text-[#D4B89D] uppercase tracking-wider font-bold group-hover:bg-[#8C6B4F] group-hover:text-white transition-colors">
-              Đổi
-            </span>
+            <Menu className="w-4 h-4" />
           </button>
-
-          <div className="h-4 w-px bg-[#E2DAD0] dark:bg-[#2E2822]" />
-
-          {/* Board Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setIsBoardDropdownOpen(!isBoardDropdownOpen)}
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-2xl hover:bg-[#F0EAE1] dark:hover:bg-[#201C18] border border-transparent hover:border-[#E2DAD0] dark:hover:border-[#352D26] transition-all text-left group"
-            >
-              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#EDE5D8] to-[#E2D6C5] dark:from-[#2A241F] dark:to-[#1E1915] border border-[#DDD3C3] dark:border-[#3A322A] flex items-center justify-center text-sm shadow-2xs">
-                {activeBoard.icon}
-              </div>
-              <div className="flex flex-col text-left">
-                <div className="flex items-center gap-1">
-                  <span className="font-editorial text-xs sm:text-sm font-semibold tracking-tight text-[#2C2723] dark:text-[#EDE8E1] group-hover:text-[#8C6B4F] dark:group-hover:text-[#D4B89D] transition-colors max-w-[110px] sm:max-w-[170px] truncate">
-                    {activeBoard.title}
-                  </span>
-                  <ChevronDown className="w-3.5 h-3.5 text-[#8E8378] group-hover:text-[#2C2723] dark:group-hover:text-[#EDE8E1] transition-transform duration-200 group-hover:translate-y-0.5" />
-                </div>
-              </div>
-            </button>
-
-            {/* Board Selector Dropdown */}
-            {isBoardDropdownOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setIsBoardDropdownOpen(false)}
-                />
-                <div className="absolute left-0 mt-2 w-72 sm:w-84 rounded-2xl bg-[#FAF8F5] dark:bg-[#181512] border border-[#E5DFD5] dark:border-[#2C2621] shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="px-3 py-2 text-[10px] font-bold text-[#94877A] dark:text-[#8F8174] uppercase tracking-widest border-b border-[#EFE9E0] dark:border-[#241F1A] mb-1.5 flex items-center justify-between">
-                    <span>
-                      {language === "vi"
-                        ? "Dự án trong không gian"
-                        : "Projects in workspace"}
-                    </span>
-                    <span className="font-mono text-[10px] text-[#A6998C]">
-                      {boards.length} bảng
-                    </span>
-                  </div>
-
-                  <div className="space-y-1 my-1 max-h-72 overflow-y-auto pr-1">
-                    {boards.map((b) => {
-                      const isActive = b.id === activeBoard.id;
-                      return (
-                        <button
-                          key={b.id}
-                          onClick={() => {
-                            setActiveBoardId(b.id);
-                            setIsBoardDropdownOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-left text-xs transition-all ${
-                            isActive
-                              ? "bg-[#EFE8DD] dark:bg-[#25201A] text-[#2C2723] dark:text-[#EDE8E1] font-semibold shadow-2xs"
-                              : "text-[#5C534A] dark:text-[#B5AAA0] hover:bg-[#F4EFE7] dark:hover:bg-[#1F1A16]"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <span className="text-base flex-shrink-0">
-                              {b.icon}
-                            </span>
-                            <div className="truncate">
-                              <div className="truncate font-medium text-[#2C2723] dark:text-[#EDE8E1]">
-                                {b.title}
-                              </div>
-                              <div className="text-[10px] text-[#8E8378] truncate">
-                                {b.description}
-                              </div>
-                            </div>
-                          </div>
-                          {isActive && (
-                            <Check className="w-3.5 h-3.5 text-[#8C6B4F] dark:text-[#D4B89D] flex-shrink-0" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="pt-2 mt-1 border-t border-[#EFE9E0] dark:border-[#241F1A] space-y-1">
-                    <button
-                      id="dropdown-workspace-hub-link"
-                      onClick={() => {
-                        setIsBoardDropdownOpen(false);
-                        setIsWorkspaceSelectorOpen(true);
-                      }}
-                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-[#5A4D41] dark:text-[#CBBDB0] hover:bg-[#F2ECE3] dark:hover:bg-[#241E18] transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-3.5 h-3.5 text-[#8C6B4F]" />
-                        <span>Màn hình Chọn Workspace</span>
-                      </div>
-                      <ExternalLink className="w-3 h-3 text-[#A09285]" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsBoardDropdownOpen(false);
-                        setIsNewBoardModalOpen(true);
-                      }}
-                      className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-[#8C6B4F] dark:text-[#D4B89D] hover:bg-[#F2ECE3] dark:hover:bg-[#241E18] transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>{t.newBoard}</span>
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="h-4 w-px bg-[#E2DAD0] dark:bg-[#2E2822] hidden md:block" />
-
-          {/* View Modes Switcher */}
-          <nav className="flex items-center gap-0.5 bg-[#EFE9DF] dark:bg-[#1E1915] p-1 rounded-2xl border border-[#E2DAD0]/60 dark:border-[#2A231C]/60">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = viewMode === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setViewMode(item.id)}
-                  className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-xl text-xs font-medium transition-all ${
-                    isActive
-                      ? "bg-white dark:bg-[#2B251E] text-[#2C2723] dark:text-[#EDE8E1] shadow-2xs font-semibold"
-                      : "text-[#7C7063] dark:text-[#8E8377] hover:text-[#2C2723] dark:hover:text-[#EDE8E1]"
-                  }`}
-                  title={item.label}
-                >
-                  <Icon
-                    className={`w-3.5 h-3.5 ${isActive ? "text-[#8C6B4F] dark:text-[#D4B89D]" : ""}`}
-                  />
-                  <span className="hidden lg:inline">{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
+          <button
+            onClick={() => setIsWorkspaceSelectorOpen(true)}
+            className="font-semibold text-[#7C7063] dark:text-[#8E8377] hover:text-[#8C6B4F] dark:hover:text-[#D4B89D] truncate max-w-[110px] sm:max-w-[160px] transition-colors"
+            title="Đổi không gian làm việc"
+          >
+            {activeWorkspace.name}
+          </button>
+          <ChevronRight className="w-3.5 h-3.5 text-[#C7BCAE] flex-shrink-0" />
+          <span className="font-editorial font-semibold text-[#2C2723] dark:text-[#EDE8E1] truncate max-w-[140px] sm:max-w-[220px]">
+            {activeBoard.title}
+          </span>
         </div>
 
         {/* Right Section: Zen Mode, Search, Filters, Theme, Language */}
@@ -313,9 +168,9 @@ export const Navbar: React.FC = () => {
             {language === "vi" ? "EN" : "VI"}
           </button>
 
-          {/* Quick Add Task Button */}
+          {/* Create Issue Button — opens the full Jira-style create modal */}
           <button
-            onClick={handleQuickAdd}
+            onClick={() => setIsCreateIssueModalOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#2C2723] hover:bg-[#1A1715] text-[#FAF8F5] dark:bg-[#EDE8E1] dark:hover:bg-[#FFFFFF] dark:text-[#1A1715] text-xs font-semibold shadow-xs hover:shadow-sm transition-all">
             <Plus className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">{t.newCard}</span>
@@ -336,6 +191,45 @@ export const Navbar: React.FC = () => {
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
           </div>
+
+          {/* User menu: account settings + logout */}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="w-7 h-7 rounded-full bg-[#8C6B4F] text-white text-xs font-semibold flex items-center justify-center flex-shrink-0 outline-none"
+              title={currentUser?.name || currentUser?.email}
+            >
+              {(currentUser?.name || currentUser?.email || "?")
+                .charAt(0)
+                .toUpperCase()}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <div className="px-2 py-1.5 text-xs text-[#9E9082] truncate max-w-[200px]">
+                {currentUser?.email}
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                render={<Link href="/settings" />}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                {language === "vi" ? "Cài đặt tài khoản" : "Account settings"}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  logout.mutate(undefined, {
+                    onSuccess: () => {
+                      router.push("/login");
+                      router.refresh();
+                    },
+                  })
+                }
+                className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                {language === "vi" ? "Đăng xuất" : "Log out"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

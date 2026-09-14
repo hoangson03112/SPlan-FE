@@ -7,6 +7,7 @@ import {
   RegisterPayload,
 } from "@/app/services/auth.service";
 import { ApiError } from "@/app/lib/axios";
+import { User } from "@/app/types/models";
 
 export const meQueryKey = ["me"] as const;
 
@@ -46,5 +47,41 @@ export function useLogout() {
       queryClient.setQueryData(meQueryKey, null);
       void queryClient.invalidateQueries();
     },
+  });
+}
+
+export function useForgotPassword() {
+  return useMutation<{ message: string }, ApiError, { email: string }>({
+    mutationFn: authService.forgotPassword,
+  });
+}
+
+export function useResetPassword() {
+  return useMutation<
+    { message: string },
+    ApiError,
+    { token: string; password: string }
+  >({
+    mutationFn: authService.resetPassword,
+  });
+}
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+  return useMutation<User, ApiError, { name?: string }>({
+    mutationFn: authService.updateProfile,
+    onSuccess: (user) => {
+      queryClient.setQueryData(meQueryKey, user);
+    },
+  });
+}
+
+export function useChangePassword() {
+  return useMutation<
+    { message: string },
+    ApiError,
+    { currentPassword: string; newPassword: string }
+  >({
+    mutationFn: authService.changePassword,
   });
 }

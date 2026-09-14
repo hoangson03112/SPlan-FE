@@ -18,8 +18,11 @@ export const itemService = {
     return res.data;
   },
 
-  async getItemsByList(listId: string) {
-    const res = await apiClient.get<Item[]>("/items", { params: { listId } });
+  async getItemsByList(listId: string, params?: { take?: number; skip?: number }) {
+    const res = await apiClient.get<{ items: Item[]; total: number | null }>(
+      "/items",
+      { params: { listId, ...params } },
+    );
     return res.data;
   },
 

@@ -13,7 +13,8 @@ import {
   Sparkles,
   TrendingUp,
   Sliders,
-  Check
+  Check,
+  Settings2
 } from 'lucide-react';
 import { useProject } from '@/app/context/ProjectProvider';
 import { Board } from '@/app/types/types';
@@ -29,6 +30,8 @@ export const BoardHeader: React.FC = () => {
     tasks,
     filterOptions,
     setFilterOptions,
+    setIsCustomFieldsModalOpen,
+    setIsMembersModalOpen,
     t,
     language,
   } = useProject();
@@ -37,15 +40,13 @@ export const BoardHeader: React.FC = () => {
   const [boardTitle, setBoardTitle] = useState(activeBoard.title);
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
-  const [shareCopied, setShareCopied] = useState(false);
 
   const activeBoardTasks = tasks.filter((t) => t.boardId === activeBoard.id);
-  const lastColumnId = columns[columns.length - 1]?.id;
-  const completedTasks = activeBoardTasks.filter(
-    (t) =>
-      t.columnId === lastColumnId ||
-      t.columnId.includes('5') ||
-      t.columnId.includes('done')
+  const doneColumnIds = new Set(
+    columns.filter((c) => c.group === 'DONE').map((c) => c.id),
+  );
+  const completedTasks = activeBoardTasks.filter((t) =>
+    doneColumnIds.has(t.columnId),
   );
   const completionPercentage =
     activeBoardTasks.length > 0
@@ -62,12 +63,6 @@ export const BoardHeader: React.FC = () => {
   const handleThemeChange = (style: Board['backgroundStyle']) => {
     updateBoard(activeBoard.id, { backgroundStyle: style });
     setIsThemeMenuOpen(false);
-  };
-
-  const handleShare = () => {
-    navigator.clipboard?.writeText(window.location.href);
-    setShareCopied(true);
-    setTimeout(() => setShareCopied(false), 2000);
   };
 
   const LUXURY_PALETTES: { id: Board['backgroundStyle']; label: string; dotColor: string; description: string }[] = [
@@ -145,8 +140,12 @@ export const BoardHeader: React.FC = () => {
 
         {/* Right: Team Stacks, Palette Couture, Share Link, More */}
         <div className="flex items-center gap-2 sm:gap-3 self-end md:self-center">
-          {/* Member Avatars */}
-          <div className="flex items-center -space-x-2">
+          {/* Member Avatars — click to invite/manage members */}
+          <button
+            onClick={() => setIsMembersModalOpen(true)}
+            className="flex items-center -space-x-2 hover:scale-105 transition-transform"
+            title="Quản lý thành viên"
+          >
             {members.slice(0, 4).map((member) => (
               <img
                 key={member.id}
@@ -162,7 +161,7 @@ export const BoardHeader: React.FC = () => {
                 +{members.length - 4}
               </div>
             )}
-          </div>
+          </button>
 
           <div className="h-4 w-px bg-[#E2DAD0] dark:bg-[#2C2620]" />
 
@@ -215,13 +214,13 @@ export const BoardHeader: React.FC = () => {
             )}
           </div>
 
-          {/* Share Button */}
+          {/* Share / Invite Button */}
           <button
-            onClick={handleShare}
+            onClick={() => setIsMembersModalOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F0EAE1] dark:bg-[#231D18] hover:bg-[#E5DDCF] dark:hover:bg-[#2C241E] text-[#4A4137] dark:text-[#EDE8E1] text-xs font-semibold border border-[#DDD3C3] dark:border-[#382E25] shadow-2xs transition-all"
           >
             <Share2 className="w-3.5 h-3.5 text-[#8C6B4F]" />
-            <span>{shareCopied ? 'Đã chép link!' : 'Chia sẻ'}</span>
+            <span>Chia sẻ</span>
           </button>
 
           {/* Board Options */}
@@ -246,6 +245,16 @@ export const BoardHeader: React.FC = () => {
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                     <span>Đổi tên bảng</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsCustomFieldsModalOpen(true);
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left text-[#4A4137] dark:text-[#EDE8E1] hover:bg-[#F2ECE3] dark:hover:bg-[#221C17] transition-colors"
+                  >
+                    <Settings2 className="w-3.5 h-3.5" />
+                    <span>Trường tùy chỉnh</span>
                   </button>
                   {boards.length > 1 && (
                     <button

@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { Minimize2 } from "lucide-react";
 import { useProject } from "@/app/context/ProjectProvider";
 import { WorkspaceSelector } from "./WorkspaceSelector";
+import { ProjectSidebar } from "./ProjectSidebar";
 import { Navbar } from "./Navbar";
 import { BoardHeader } from "./BoardHeader";
 import { KanbanView } from "./KanbanView";
+import { BacklogView } from "./BacklogView";
 import { TableView } from "./TableView";
 import { TimelineView } from "./TimelineView";
 import { AnalyticsView } from "./AnalyticsView";
@@ -13,9 +16,13 @@ import { TaskDetailModal } from "./TaskDetailModal";
 import { CommandPalette } from "./CommandPalette";
 import { FilterDrawer } from "./FilterDrawer";
 import { NewBoardModal } from "./NewBoardModal";
+import { CreateIssueModal } from "./CreateIssueModal";
+import { CustomFieldsModal } from "./CustomFieldsModal";
+import { MembersModal } from "./MembersModal";
 
 const Board: React.FC = () => {
   const { viewMode, activeBoard, zenMode, toggleZenMode } = useProject();
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const getCanvasBackground = (style?: typeof activeBoard.backgroundStyle) => {
     switch (style) {
@@ -40,42 +47,56 @@ const Board: React.FC = () => {
   };
 
   return (
-    <div
-      className={`min-h-screen flex flex-col transition-colors duration-300 selection:bg-[#8C6B4F] selection:text-white relative ${getCanvasBackground(
-        activeBoard.backgroundStyle,
-      )}`}
-    >
-      {/* Zen Mode Exit Button if Zen Mode is active */}
-      {zenMode && (
-        <div className="fixed top-4 right-6 z-50 animate-in fade-in zoom-in-95 duration-200">
-          <button
-            onClick={toggleZenMode}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#2C2723]/90 dark:bg-[#EDE8E1]/90 text-[#FAF8F5] dark:text-[#181512] text-xs font-semibold backdrop-blur-md shadow-lg hover:scale-105 transition-all"
-            title="Thoát chế độ tập trung (Zen Mode)"
-          >
-            <Minimize2 className="w-3.5 h-3.5" />
-            <span>Thoát Zen Mode</span>
-          </button>
-        </div>
+    <div className="min-h-screen flex">
+      {/* Jira-style project rail: Board / Backlog / Reports for this board */}
+      {!zenMode && (
+        <ProjectSidebar
+          mobileOpen={isMobileSidebarOpen}
+          onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        />
       )}
 
-      {/* Conditionally render Navbar based on zenMode */}
-      {!zenMode && <Navbar />}
+      <div
+        className={`flex-1 min-w-0 flex flex-col transition-colors duration-300 selection:bg-[#8C6B4F] selection:text-white relative ${getCanvasBackground(
+          activeBoard.backgroundStyle,
+        )}`}
+      >
+        {/* Zen Mode Exit Button if Zen Mode is active */}
+        {zenMode && (
+          <div className="fixed top-4 right-6 z-50 animate-in fade-in zoom-in-95 duration-200">
+            <button
+              onClick={toggleZenMode}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#2C2723]/90 dark:bg-[#EDE8E1]/90 text-[#FAF8F5] dark:text-[#181512] text-xs font-semibold backdrop-blur-md shadow-lg hover:scale-105 transition-all"
+              title="Thoát chế độ tập trung (Zen Mode)"
+            >
+              <Minimize2 className="w-3.5 h-3.5" />
+              <span>Thoát Zen Mode</span>
+            </button>
+          </div>
+        )}
 
-      <BoardHeader />
+        {/* Conditionally render Navbar based on zenMode */}
+        {!zenMode && <Navbar onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)} />}
 
-      <main className="flex-1 flex flex-col min-h-0">
-        {viewMode === "kanban" && <KanbanView />}
-        {viewMode === "table" && <TableView />}
-        {viewMode === "timeline" && <TimelineView />}
-        {viewMode === "analytics" && <AnalyticsView />}
-      </main>
+        <BoardHeader />
 
-      {/* Global Modals & Drawers */}
-      <TaskDetailModal />
-      <CommandPalette />
-      <FilterDrawer />
-      <NewBoardModal />
+        <main className="flex-1 flex flex-col min-h-0">
+          {viewMode === "kanban" && <KanbanView />}
+          {viewMode === "backlog" && <BacklogView />}
+          {viewMode === "table" && <TableView />}
+          {viewMode === "timeline" && <TimelineView />}
+          {viewMode === "analytics" && <AnalyticsView />}
+        </main>
+
+        {/* Global Modals & Drawers */}
+        <TaskDetailModal />
+        <CommandPalette />
+        <FilterDrawer />
+        <NewBoardModal />
+        <CreateIssueModal />
+        <CustomFieldsModal />
+        <MembersModal />
+      </div>
     </div>
   );
 };

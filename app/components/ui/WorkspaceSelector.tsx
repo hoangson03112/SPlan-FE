@@ -1,37 +1,38 @@
-'use client';
+"use client";
 
-import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Building2, 
-  Plus, 
-  Search, 
-  Star, 
-  Users, 
-  ArrowRight, 
-  CheckCircle2, 
-  Clock, 
-  FolderKanban, 
-  Grid3X3, 
-  List, 
-  Sun, 
-  Moon, 
-  Check, 
-  Copy, 
-  MoreHorizontal, 
-  KeyRound, 
-  ShieldCheck, 
-  Sparkles, 
-  X, 
-  Mail, 
-  Globe, 
-  Trash2, 
+import React, { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import {
+  Building2,
+  Plus,
+  Search,
+  Star,
+  Users,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  FolderKanban,
+  Grid3X3,
+  List,
+  Sun,
+  Moon,
+  Check,
+  Copy,
+  MoreHorizontal,
+  KeyRound,
+  ShieldCheck,
+  Sparkles,
+  X,
+  Mail,
+  Globe,
+  Trash2,
   Edit3,
   ChevronRight,
-  Briefcase
-} from 'lucide-react';
-import { useProject } from '@/app/context/ProjectProvider';
-import { Workspace } from '@/app/types/types';
+  Briefcase,
+} from "lucide-react";
+import { useProject } from "@/app/context/ProjectProvider";
+import { Workspace } from "@/app/types/types";
+import Link from "next/link";
 
 export const WorkspaceSelector: React.FC = () => {
   const {
@@ -50,28 +51,34 @@ export const WorkspaceSelector: React.FC = () => {
   } = useProject();
 
   // Search & Filter States
-  const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'starred' | 'owner' | 'shared'>('all');
-  const [viewStyle, setViewStyle] = useState<'grid' | 'list'>('grid');
-  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<
+    "all" | "starred" | "owner" | "shared"
+  >("all");
+  const [viewStyle, setViewStyle] = useState<"grid" | "list">("grid");
+
   // Modals & Popovers
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
-  const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
-  const [activeMenuWorkspaceId, setActiveMenuWorkspaceId] = useState<string | null>(null);
+  const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(
+    null,
+  );
+  const [activeMenuWorkspaceId, setActiveMenuWorkspaceId] = useState<
+    string | null
+  >(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Form states for Create Workspace
-  const [newWsName, setNewWsName] = useState('');
-  const [newWsDesc, setNewWsDesc] = useState('');
-  const [newWsIcon, setNewWsIcon] = useState('🚀');
-  const [newWsAccent, setNewWsAccent] = useState('#D97706');
-  const [newWsCategory, setNewWsCategory] = useState('Truyền thông & Nội dung');
-  const [newWsInvites, setNewWsInvites] = useState('');
+  const [newWsName, setNewWsName] = useState("");
+  const [newWsDesc, setNewWsDesc] = useState("");
+  const [newWsIcon, setNewWsIcon] = useState("🚀");
+  const [newWsAccent, setNewWsAccent] = useState("#D97706");
+  const [newWsCategory, setNewWsCategory] = useState("Truyền thông & Nội dung");
+  const [newWsInvites, setNewWsInvites] = useState("");
 
   // Form state for Join Code
-  const [joinCode, setJoinCode] = useState('');
-  const [joinError, setJoinError] = useState('');
+  const [joinCode, setJoinCode] = useState("");
+  const [joinError, setJoinError] = useState("");
 
   // Toast feedback helper
   const showToast = (msg: string) => {
@@ -80,22 +87,35 @@ export const WorkspaceSelector: React.FC = () => {
   };
 
   // Emojis and Colors palette for creation
-  const ICON_CHOICES = ['🎬', '🎉', '☕', '📚', '🚀', '💼', '🎨', '🔬', '🌿', '🎯', '⚡', '🏗️'];
+  const ICON_CHOICES = [
+    "🎬",
+    "🎉",
+    "☕",
+    "📚",
+    "🚀",
+    "💼",
+    "🎨",
+    "🔬",
+    "🌿",
+    "🎯",
+    "⚡",
+    "🏗️",
+  ];
   const ACCENT_CHOICES = [
-    { label: 'Hổ phách', color: '#D97706' },
-    { label: 'Tím thạch anh', color: '#6366F1' },
-    { label: 'Xanh lục bảo', color: '#059669' },
-    { label: 'Xanh biển trời', color: '#0284C7' },
-    { label: 'Hồng thạch đào', color: '#DB2777' },
-    { label: 'Than đá', color: '#4B5563' },
+    { label: "Hổ phách", color: "#D97706" },
+    { label: "Tím thạch anh", color: "#6366F1" },
+    { label: "Xanh lục bảo", color: "#059669" },
+    { label: "Xanh biển trời", color: "#0284C7" },
+    { label: "Hồng thạch đào", color: "#DB2777" },
+    { label: "Than đá", color: "#4B5563" },
   ];
   const CATEGORY_CHOICES = [
-    'Truyền thông & Nội dung',
-    'Sự kiện & Agency',
-    'Kinh doanh & Vận hành',
-    'Cá nhân & Phát triển',
-    'Công nghệ & Phần mềm',
-    'Giáo dục & Nghiên cứu',
+    "Truyền thông & Nội dung",
+    "Sự kiện & Agency",
+    "Kinh doanh & Vận hành",
+    "Cá nhân & Phát triển",
+    "Công nghệ & Phần mềm",
+    "Giáo dục & Nghiên cứu",
   ];
 
   // Per-workspace stats come straight from the backend (WorkspaceService.
@@ -125,7 +145,9 @@ export const WorkspaceSelector: React.FC = () => {
         tasksCount,
         completedTasksCount,
         progressPercent:
-          tasksCount > 0 ? Math.round((completedTasksCount / tasksCount) * 100) : 0,
+          tasksCount > 0
+            ? Math.round((completedTasksCount / tasksCount) * 100)
+            : 0,
         workspaceBoards: isActiveWorkspace ? boards : [],
       };
     });
@@ -147,14 +169,14 @@ export const WorkspaceSelector: React.FC = () => {
         }
 
         // Role / Star filter
-        if (roleFilter === 'starred') {
+        if (roleFilter === "starred") {
           return ws.isStarred;
         }
-        if (roleFilter === 'owner') {
-          return ws.role === 'owner';
+        if (roleFilter === "owner") {
+          return ws.role === "owner";
         }
-        if (roleFilter === 'shared') {
-          return ws.role !== 'owner';
+        if (roleFilter === "shared") {
+          return ws.role !== "owner";
         }
         return true;
       })
@@ -186,22 +208,22 @@ export const WorkspaceSelector: React.FC = () => {
 
     createWorkspace(newWsName.trim());
     setIsCreateModalOpen(false);
-    setNewWsName('');
-    setNewWsDesc('');
-    setNewWsInvites('');
+    setNewWsName("");
+    setNewWsDesc("");
+    setNewWsInvites("");
   };
 
   // Visual only — no workspace mutation wired up yet.
   const handleJoinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setJoinError('');
+    setJoinError("");
     if (!joinCode.trim()) {
-      setJoinError('Vui lòng nhập mã lời mời.');
+      setJoinError("Vui lòng nhập mã lời mời.");
       return;
     }
 
     setIsJoinModalOpen(false);
-    setJoinCode('');
+    setJoinCode("");
   };
 
   // Quick copy slug link
@@ -212,19 +234,19 @@ export const WorkspaceSelector: React.FC = () => {
   };
 
   return (
-    <div 
+    <div
       id="workspace-selection-screen"
       className="min-h-screen bg-[#FAF8F5] dark:bg-[#12100E] text-[#2C2723] dark:text-[#EDE8E1] transition-colors duration-200 flex flex-col relative selection:bg-[#8C6B4F] selection:text-white"
     >
       {/* Subtle Atelier Ambient Gradient */}
-      <div 
+      <div
         className="pointer-events-none absolute inset-0 opacity-45 dark:opacity-25"
         style={{
           backgroundImage: `
             radial-gradient(at 0% 0%, rgba(217, 119, 6, 0.08) 0px, transparent 50%),
             radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
             radial-gradient(at 50% 100%, rgba(5, 150, 105, 0.06) 0px, transparent 50%)
-          `
+          `,
         }}
       />
 
@@ -244,7 +266,7 @@ export const WorkspaceSelector: React.FC = () => {
       </AnimatePresence>
 
       {/* Top Application Header */}
-      <header 
+      <header
         id="workspace-header"
         className="relative z-20 border-b border-[#E8E2D8]/80 dark:border-[#26201B]/80 bg-[#FAF8F5]/85 dark:bg-[#12100E]/85 backdrop-blur-xl px-4 sm:px-8 py-3"
       >
@@ -274,7 +296,7 @@ export const WorkspaceSelector: React.FC = () => {
             {/* Language Switcher */}
             <button
               id="btn-switch-lang"
-              onClick={() => setLanguage(language === 'vi' ? 'en' : 'vi')}
+              onClick={() => setLanguage(language === "vi" ? "en" : "vi")}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-[#E5DFD5] dark:border-[#2C2621] text-xs font-medium text-[#6B5F54] dark:text-[#B0A396] hover:bg-[#F2ECE3] dark:hover:bg-[#1E1915] transition-all"
               title="Đổi ngôn ngữ"
             >
@@ -287,29 +309,40 @@ export const WorkspaceSelector: React.FC = () => {
               id="btn-toggle-theme"
               onClick={toggleThemeMode}
               className="p-2 rounded-xl border border-[#E5DFD5] dark:border-[#2C2621] text-[#6B5F54] dark:text-[#B0A396] hover:bg-[#F2ECE3] dark:hover:bg-[#1E1915] transition-all"
-              title={themeMode === 'light' ? 'Chuyển sang giao diện Tối' : 'Chuyển sang giao diện Sáng'}
+              title={
+                themeMode === "light"
+                  ? "Chuyển sang giao diện Tối"
+                  : "Chuyển sang giao diện Sáng"
+              }
             >
-              {themeMode === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-400" />}
+              {themeMode === "light" ? (
+                <Moon className="w-4 h-4" />
+              ) : (
+                <Sun className="w-4 h-4 text-amber-400" />
+              )}
             </button>
 
             <div className="h-5 w-px bg-[#E5DFD5] dark:bg-[#2C2621] hidden sm:block" />
 
             {/* Current Logged-in User Profile Chip */}
-            <div 
+            <div
               id="user-profile-chip"
               className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-[#F2ECE3]/80 dark:bg-[#1C1814]/80 border border-[#E5DFD5] dark:border-[#2C2621]"
             >
               <img
-                src={members[0]?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
-                alt={members[0]?.name || 'User'}
+                src={
+                  members[0]?.avatar ||
+                  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
+                }
+                alt={members[0]?.name || "User"}
                 className="w-7 h-7 rounded-full object-cover border border-[#DDD3C3] dark:border-[#382F27]"
               />
               <div className="hidden sm:block text-left">
                 <div className="text-xs font-semibold text-[#2C2723] dark:text-[#EDE8E1] leading-tight">
-                  {members[0]?.name || 'Mai Anh'}
+                  {members[0]?.name || "Mai Anh"}
                 </div>
                 <div className="text-[10px] text-[#8E8378] dark:text-[#9E9082]">
-                  {members[0]?.email || 'maianh@example.com'}
+                  {members[0]?.email || "maianh@example.com"}
                 </div>
               </div>
             </div>
@@ -336,22 +369,33 @@ export const WorkspaceSelector: React.FC = () => {
                 Chọn Không Gian Làm Việc
               </h1>
               <p className="mt-1.5 text-sm sm:text-base text-[#6B5F54] dark:text-[#A89C8F] max-w-2xl leading-relaxed">
-                Chào mừng bạn trở lại! Hãy chọn không gian tương ứng để truy cập các bảng kế hoạch, theo dõi tiến độ và điều phối thành viên.
+                Chào mừng bạn trở lại! Hãy chọn không gian tương ứng để truy cập
+                các bảng kế hoạch, theo dõi tiến độ và điều phối thành viên.
               </p>
             </div>
 
             {/* Quick Global Summary Badges */}
             <div className="flex items-center gap-3">
               <div className="px-4 py-2.5 rounded-2xl bg-white/70 dark:bg-[#191512]/70 border border-[#E8E2D8] dark:border-[#28221C] shadow-xs text-left">
-                <div className="text-[11px] font-medium text-[#8E8378]">Tổng số dự án</div>
+                <div className="text-[11px] font-medium text-[#8E8378]">
+                  Tổng số dự án
+                </div>
                 <div className="text-lg font-bold font-mono-data text-[#2C2723] dark:text-[#EDE8E1]">
-                  {totalBoardsCount} <span className="text-xs font-normal text-[#8E8378]">bảng</span>
+                  {totalBoardsCount}{" "}
+                  <span className="text-xs font-normal text-[#8E8378]">
+                    bảng
+                  </span>
                 </div>
               </div>
               <div className="px-4 py-2.5 rounded-2xl bg-white/70 dark:bg-[#191512]/70 border border-[#E8E2D8] dark:border-[#28221C] shadow-xs text-left">
-                <div className="text-[11px] font-medium text-[#8E8378]">Nhiệm vụ đang xử lý</div>
+                <div className="text-[11px] font-medium text-[#8E8378]">
+                  Nhiệm vụ đang xử lý
+                </div>
                 <div className="text-lg font-bold font-mono-data text-[#8C6B4F] dark:text-[#D4B89D]">
-                  {totalTasksCount} <span className="text-xs font-normal text-[#8E8378]">việc</span>
+                  {totalTasksCount}{" "}
+                  <span className="text-xs font-normal text-[#8E8378]">
+                    việc
+                  </span>
                 </div>
               </div>
             </div>
@@ -359,7 +403,7 @@ export const WorkspaceSelector: React.FC = () => {
         </div>
 
         {/* Toolbar: Search, Role Filter, View Switch, Actions */}
-        <div 
+        <div
           id="workspace-toolbar"
           className="mb-6 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5 p-2.5 sm:p-3 rounded-2xl bg-white/60 dark:bg-[#181411]/60 border border-[#E8E2D8] dark:border-[#28221C] backdrop-blur-md shadow-xs"
         >
@@ -378,7 +422,7 @@ export const WorkspaceSelector: React.FC = () => {
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => setSearchQuery("")}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9E9082] hover:text-[#2C2723] dark:hover:text-[#EDE8E1]"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -390,48 +434,51 @@ export const WorkspaceSelector: React.FC = () => {
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
               <button
                 id="filter-role-all"
-                onClick={() => setRoleFilter('all')}
+                onClick={() => setRoleFilter("all")}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                  roleFilter === 'all'
-                    ? 'bg-[#2C2723] text-[#FAF8F5] dark:bg-[#EDE8E1] dark:text-[#181512] shadow-xs'
-                    : 'text-[#6B5F54] dark:text-[#B0A396] hover:bg-[#EFE9E0] dark:hover:bg-[#201C18]'
+                  roleFilter === "all"
+                    ? "bg-[#2C2723] text-[#FAF8F5] dark:bg-[#EDE8E1] dark:text-[#181512] shadow-xs"
+                    : "text-[#6B5F54] dark:text-[#B0A396] hover:bg-[#EFE9E0] dark:hover:bg-[#201C18]"
                 }`}
               >
                 Tất cả ({workspaces.length})
               </button>
               <button
                 id="filter-role-starred"
-                onClick={() => setRoleFilter('starred')}
+                onClick={() => setRoleFilter("starred")}
                 className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                  roleFilter === 'starred'
-                    ? 'bg-[#2C2723] text-[#FAF8F5] dark:bg-[#EDE8E1] dark:text-[#181512] shadow-xs'
-                    : 'text-[#6B5F54] dark:text-[#B0A396] hover:bg-[#EFE9E0] dark:hover:bg-[#201C18]'
+                  roleFilter === "starred"
+                    ? "bg-[#2C2723] text-[#FAF8F5] dark:bg-[#EDE8E1] dark:text-[#181512] shadow-xs"
+                    : "text-[#6B5F54] dark:text-[#B0A396] hover:bg-[#EFE9E0] dark:hover:bg-[#201C18]"
                 }`}
               >
                 <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                <span>Yêu thích ({workspaces.filter((w) => w.isStarred).length})</span>
+                <span>
+                  Yêu thích ({workspaces.filter((w) => w.isStarred).length})
+                </span>
               </button>
               <button
                 id="filter-role-owner"
-                onClick={() => setRoleFilter('owner')}
+                onClick={() => setRoleFilter("owner")}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                  roleFilter === 'owner'
-                    ? 'bg-[#2C2723] text-[#FAF8F5] dark:bg-[#EDE8E1] dark:text-[#181512] shadow-xs'
-                    : 'text-[#6B5F54] dark:text-[#B0A396] hover:bg-[#EFE9E0] dark:hover:bg-[#201C18]'
+                  roleFilter === "owner"
+                    ? "bg-[#2C2723] text-[#FAF8F5] dark:bg-[#EDE8E1] dark:text-[#181512] shadow-xs"
+                    : "text-[#6B5F54] dark:text-[#B0A396] hover:bg-[#EFE9E0] dark:hover:bg-[#201C18]"
                 }`}
               >
-                Của tôi ({workspaces.filter((w) => w.role === 'owner').length})
+                Của tôi ({workspaces.filter((w) => w.role === "owner").length})
               </button>
               <button
                 id="filter-role-shared"
-                onClick={() => setRoleFilter('shared')}
+                onClick={() => setRoleFilter("shared")}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                  roleFilter === 'shared'
-                    ? 'bg-[#2C2723] text-[#FAF8F5] dark:bg-[#EDE8E1] dark:text-[#181512] shadow-xs'
-                    : 'text-[#6B5F54] dark:text-[#B0A396] hover:bg-[#EFE9E0] dark:hover:bg-[#201C18]'
+                  roleFilter === "shared"
+                    ? "bg-[#2C2723] text-[#FAF8F5] dark:bg-[#EDE8E1] dark:text-[#181512] shadow-xs"
+                    : "text-[#6B5F54] dark:text-[#B0A396] hover:bg-[#EFE9E0] dark:hover:bg-[#201C18]"
                 }`}
               >
-                Được chia sẻ ({workspaces.filter((w) => w.role !== 'owner').length})
+                Được chia sẻ (
+                {workspaces.filter((w) => w.role !== "owner").length})
               </button>
             </div>
           </div>
@@ -442,11 +489,11 @@ export const WorkspaceSelector: React.FC = () => {
             <div className="flex items-center p-1 rounded-xl bg-[#EFE9E0] dark:bg-[#201B17] border border-[#E5DFD5] dark:border-[#2C2621]">
               <button
                 id="btn-view-grid"
-                onClick={() => setViewStyle('grid')}
+                onClick={() => setViewStyle("grid")}
                 className={`p-1.5 rounded-lg text-xs transition-all ${
-                  viewStyle === 'grid'
-                    ? 'bg-white dark:bg-[#2C2621] text-[#2C2723] dark:text-[#EDE8E1] shadow-2xs'
-                    : 'text-[#8E8378] hover:text-[#2C2723] dark:hover:text-[#EDE8E1]'
+                  viewStyle === "grid"
+                    ? "bg-white dark:bg-[#2C2621] text-[#2C2723] dark:text-[#EDE8E1] shadow-2xs"
+                    : "text-[#8E8378] hover:text-[#2C2723] dark:hover:text-[#EDE8E1]"
                 }`}
                 title="Dạng lưới thẻ"
               >
@@ -454,11 +501,11 @@ export const WorkspaceSelector: React.FC = () => {
               </button>
               <button
                 id="btn-view-list"
-                onClick={() => setViewStyle('list')}
+                onClick={() => setViewStyle("list")}
                 className={`p-1.5 rounded-lg text-xs transition-all ${
-                  viewStyle === 'list'
-                    ? 'bg-white dark:bg-[#2C2621] text-[#2C2723] dark:text-[#EDE8E1] shadow-2xs'
-                    : 'text-[#8E8378] hover:text-[#2C2723] dark:hover:text-[#EDE8E1]'
+                  viewStyle === "list"
+                    ? "bg-white dark:bg-[#2C2621] text-[#2C2723] dark:text-[#EDE8E1] shadow-2xs"
+                    : "text-[#8E8378] hover:text-[#2C2723] dark:hover:text-[#EDE8E1]"
                 }`}
                 title="Dạng danh sách gọn"
               >
@@ -470,7 +517,7 @@ export const WorkspaceSelector: React.FC = () => {
             <button
               id="btn-open-join-modal"
               onClick={() => {
-                setJoinError('');
+                setJoinError("");
                 setIsJoinModalOpen(true);
               }}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-[#DDD5C7] dark:border-[#382F27] bg-[#F7F2E9] dark:bg-[#1E1915] text-[#5C5146] dark:text-[#C7B9AC] hover:bg-[#EFE8DC] dark:hover:bg-[#26201B] transition-all"
@@ -494,7 +541,7 @@ export const WorkspaceSelector: React.FC = () => {
 
         {/* Workspaces List / Grid */}
         {filteredWorkspaces.length === 0 ? (
-          <div 
+          <div
             id="workspace-empty-state"
             className="flex-1 flex flex-col items-center justify-center p-12 text-center rounded-3xl border border-dashed border-[#DDD5C7] dark:border-[#332A22] bg-white/40 dark:bg-[#181411]/40 my-6"
           >
@@ -505,13 +552,14 @@ export const WorkspaceSelector: React.FC = () => {
               Không tìm thấy không gian làm việc phù hợp
             </h3>
             <p className="mt-1 text-xs text-[#8E8378] max-w-sm">
-              Không có kết quả nào khớp với &quot;{searchQuery}&quot;. Hãy thử tìm với từ khóa khác hoặc tạo không gian mới.
+              Không có kết quả nào khớp với &quot;{searchQuery}&quot;. Hãy thử
+              tìm với từ khóa khác hoặc tạo không gian mới.
             </p>
             <div className="mt-5 flex items-center gap-3">
               <button
                 onClick={() => {
-                  setSearchQuery('');
-                  setRoleFilter('all');
+                  setSearchQuery("");
+                  setRoleFilter("all");
                 }}
                 className="px-4 py-2 rounded-xl text-xs font-semibold border border-[#DDD5C7] dark:border-[#332A22] text-[#5C5146] dark:text-[#C7B9AC] hover:bg-[#EFE9E0] dark:hover:bg-[#201A15] transition-all"
               >
@@ -525,9 +573,9 @@ export const WorkspaceSelector: React.FC = () => {
               </button>
             </div>
           </div>
-        ) : viewStyle === 'grid' ? (
+        ) : viewStyle === "grid" ? (
           /* Grid View Layout */
-          <div 
+          <div
             id="workspace-grid-container"
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5"
           >
@@ -551,8 +599,8 @@ export const WorkspaceSelector: React.FC = () => {
                   transition={{ duration: 0.2, delay: idx * 0.04 }}
                   className={`group relative rounded-2xl p-5 transition-all duration-200 flex flex-col justify-between border ${
                     isCurrentActive
-                      ? 'bg-white dark:bg-[#1A1613] border-[#8C6B4F] dark:border-[#D4B89D] ring-2 ring-[#8C6B4F]/20 dark:ring-[#D4B89D]/20 shadow-md'
-                      : 'bg-white/80 dark:bg-[#181411]/80 hover:bg-white dark:hover:bg-[#1C1814] border-[#E8E2D8] dark:border-[#2C2621] hover:border-[#D1C7BA] dark:hover:border-[#403730] shadow-xs hover:shadow-md'
+                      ? "bg-white dark:bg-[#1A1613] border-[#8C6B4F] dark:border-[#D4B89D] ring-2 ring-[#8C6B4F]/20 dark:ring-[#D4B89D]/20 shadow-md"
+                      : "bg-white/80 dark:bg-[#181411]/80 hover:bg-white dark:hover:bg-[#1C1814] border-[#E8E2D8] dark:border-[#2C2621] hover:border-[#D1C7BA] dark:hover:border-[#403730] shadow-xs hover:shadow-md"
                   }`}
                 >
                   {/* Top Row: Icon, Title, Role, Pin, Menu */}
@@ -585,7 +633,9 @@ export const WorkspaceSelector: React.FC = () => {
                             <span className="text-[11px] font-mono-data text-[#8E8378] dark:text-[#9E9082]">
                               /{ws.slug}
                             </span>
-                            <span className="text-[10px] text-[#A89C8F]">•</span>
+                            <span className="text-[10px] text-[#A89C8F]">
+                              •
+                            </span>
                             <span className="text-[11px] text-[#8E8378] dark:text-[#9E9082] truncate max-w-[130px]">
                               {ws.category}
                             </span>
@@ -600,12 +650,14 @@ export const WorkspaceSelector: React.FC = () => {
                           onClick={(e) => e.stopPropagation()}
                           className={`p-1.5 rounded-xl border border-transparent hover:border-[#E5DFD5] dark:hover:border-[#2C2621] transition-colors ${
                             ws.isStarred
-                              ? 'text-amber-500 fill-amber-500'
-                              : 'text-[#A09285] hover:text-[#2C2723] dark:hover:text-[#EDE8E1]'
+                              ? "text-amber-500 fill-amber-500"
+                              : "text-[#A09285] hover:text-[#2C2723] dark:hover:text-[#EDE8E1]"
                           }`}
-                          title={ws.isStarred ? 'Bỏ ghim' : 'Ghim lên đầu'}
+                          title={ws.isStarred ? "Bỏ ghim" : "Ghim lên đầu"}
                         >
-                          <Star className={`w-4 h-4 ${ws.isStarred ? 'fill-current' : ''}`} />
+                          <Star
+                            className={`w-4 h-4 ${ws.isStarred ? "fill-current" : ""}`}
+                          />
                         </button>
 
                         {/* More Menu Popover Trigger */}
@@ -614,7 +666,9 @@ export const WorkspaceSelector: React.FC = () => {
                             id={`menu-trigger-${ws.id}`}
                             onClick={(e) => {
                               e.stopPropagation();
-                              setActiveMenuWorkspaceId(isMenuOpen ? null : ws.id);
+                              setActiveMenuWorkspaceId(
+                                isMenuOpen ? null : ws.id,
+                              );
                             }}
                             className="p-1.5 rounded-xl text-[#A09285] hover:text-[#2C2723] dark:hover:text-[#EDE8E1] hover:bg-[#F2ECE3] dark:hover:bg-[#201B17] transition-colors"
                           >
@@ -628,7 +682,7 @@ export const WorkspaceSelector: React.FC = () => {
                                 className="fixed inset-0 z-30"
                                 onClick={() => setActiveMenuWorkspaceId(null)}
                               />
-                              <div 
+                              <div
                                 id={`menu-dropdown-${ws.id}`}
                                 className="absolute right-0 mt-1.5 w-48 rounded-xl bg-white dark:bg-[#1A1613] border border-[#E5DFD5] dark:border-[#2C2621] shadow-xl p-1.5 z-40 animate-in fade-in zoom-in-95 duration-100 text-xs"
                               >
@@ -651,7 +705,9 @@ export const WorkspaceSelector: React.FC = () => {
                                 </button>
                                 {workspaces.length > 1 && (
                                   <button
-                                    onClick={() => setActiveMenuWorkspaceId(null)}
+                                    onClick={() =>
+                                      setActiveMenuWorkspaceId(null)
+                                    }
                                     className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -681,11 +737,11 @@ export const WorkspaceSelector: React.FC = () => {
                       >
                         <ShieldCheck className="w-3 h-3" />
                         <span>
-                          {ws.role === 'owner'
-                            ? 'Chủ sở hữu'
-                            : ws.role === 'admin'
-                            ? 'Quản trị viên'
-                            : 'Thành viên'}
+                          {ws.role === "owner"
+                            ? "Chủ sở hữu"
+                            : ws.role === "admin"
+                              ? "Quản trị viên"
+                              : "Thành viên"}
                         </span>
                       </span>
 
@@ -709,7 +765,8 @@ export const WorkspaceSelector: React.FC = () => {
                           </span>
                         </div>
                         <div className="text-[#8E8378] text-[11px] font-mono-data">
-                          {stats.completedTasksCount}/{stats.tasksCount} hoàn tất
+                          {stats.completedTasksCount}/{stats.tasksCount} hoàn
+                          tất
                         </div>
                       </div>
 
@@ -726,7 +783,9 @@ export const WorkspaceSelector: React.FC = () => {
                         </div>
                         <div className="flex justify-between items-center mt-1 text-[10px] text-[#8E8378]">
                           <span>Tiến độ tổng thể</span>
-                          <span className="font-mono-data font-semibold">{stats.progressPercent}%</span>
+                          <span className="font-mono-data font-semibold">
+                            {stats.progressPercent}%
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -753,14 +812,14 @@ export const WorkspaceSelector: React.FC = () => {
                     </div>
 
                     {/* Enter Workspace Button */}
-                    <button
+                    <Link
                       id={`enter-ws-${ws.id}`}
-                      onClick={() => selectWorkspace(ws.id)}
+                      href={`/workspaces/${ws.slug}`}
                       className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-[#2C2723] dark:bg-[#EDE8E1] text-[#FAF8F5] dark:text-[#181512] hover:bg-[#433C36] dark:hover:bg-white group/btn transition-all hover:scale-[1.03]"
                     >
-                      <span>Vào không gian</span>
+                      <span>Chi tiết</span>
                       <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/btn:translate-x-1" />
-                    </button>
+                    </Link>
                   </div>
                 </motion.div>
               );
@@ -768,10 +827,7 @@ export const WorkspaceSelector: React.FC = () => {
           </div>
         ) : (
           /* List View Layout */
-          <div 
-            id="workspace-list-container"
-            className="space-y-3"
-          >
+          <div id="workspace-list-container" className="space-y-3">
             {filteredWorkspaces.map((ws) => {
               const stats = workspaceStats[ws.id] || {
                 boardsCount: 0,
@@ -789,8 +845,8 @@ export const WorkspaceSelector: React.FC = () => {
                   onClick={() => selectWorkspace(ws.id)}
                   className={`group p-4 rounded-2xl border transition-all duration-150 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer ${
                     isCurrentActive
-                      ? 'bg-white dark:bg-[#1A1613] border-[#8C6B4F] dark:border-[#D4B89D] ring-1 ring-[#8C6B4F]/20 shadow-xs'
-                      : 'bg-white/80 dark:bg-[#181411]/80 hover:bg-white dark:hover:bg-[#1C1814] border-[#E8E2D8] dark:border-[#2C2621] hover:border-[#D1C7BA] dark:hover:border-[#3D342D]'
+                      ? "bg-white dark:bg-[#1A1613] border-[#8C6B4F] dark:border-[#D4B89D] ring-1 ring-[#8C6B4F]/20 shadow-xs"
+                      : "bg-white/80 dark:bg-[#181411]/80 hover:bg-white dark:hover:bg-[#1C1814] border-[#E8E2D8] dark:border-[#2C2621] hover:border-[#D1C7BA] dark:hover:border-[#3D342D]"
                   }`}
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
@@ -831,7 +887,9 @@ export const WorkspaceSelector: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" />
-                        <span className="font-mono-data">{stats.progressPercent}%</span>
+                        <span className="font-mono-data">
+                          {stats.progressPercent}%
+                        </span>
                       </div>
                       <div className="hidden md:flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
@@ -858,7 +916,7 @@ export const WorkspaceSelector: React.FC = () => {
         )}
 
         {/* Footer Preferences & Tips */}
-        <div 
+        <div
           id="workspace-footer-banner"
           className="mt-10 pt-6 border-t border-[#E8E2D8] dark:border-[#26201B] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#8E8378]"
         >
@@ -876,7 +934,10 @@ export const WorkspaceSelector: React.FC = () => {
 
           {/* Quick Shortcuts & Navigation Tip */}
           <div className="flex items-center gap-3 text-[11px]">
-            <span>Mẹo: Bạn có thể đổi workspace bất cứ lúc nào từ thanh Menu trên cùng</span>
+            <span>
+              Mẹo: Bạn có thể đổi workspace bất cứ lúc nào từ thanh Menu trên
+              cùng
+            </span>
           </div>
         </div>
       </main>
@@ -900,7 +961,7 @@ export const WorkspaceSelector: React.FC = () => {
               initial={{ opacity: 0, scale: 0.96, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 15 }}
-              className="relative z-10 w-full max-w-lg rounded-3xl bg-[#FAF8F5] dark:bg-[#181411] border border-[#E5DFD5] dark:border-[#2C2621] shadow-2xl p-6 sm:p-7 overflow-hidden"
+              className="relative z-10 w-full max-w-3xl rounded-3xl bg-[#FAF8F5] dark:bg-[#181411] border border-[#E5DFD5] dark:border-[#2C2621] shadow-2xl p-6 sm:p-7 overflow-hidden"
             >
               {/* Close button */}
               <button
@@ -912,8 +973,8 @@ export const WorkspaceSelector: React.FC = () => {
               </button>
 
               <div className="flex items-center gap-3 mb-5">
-                <div 
-                  className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl border shadow-xs"
+                <div
+                  className="w-18 h-12 rounded-2xl flex items-center justify-center text-2xl border shadow-xs"
                   style={{
                     backgroundColor: `${newWsAccent}20`,
                     borderColor: `${newWsAccent}40`,
@@ -926,7 +987,8 @@ export const WorkspaceSelector: React.FC = () => {
                     Tạo Không Gian Làm Việc Mới
                   </h3>
                   <p className="text-xs text-[#8E8378]">
-                    Tổ chức các bảng kế hoạch, phân loại đầu việc và mời đồng nghiệp.
+                    Tổ chức các bảng kế hoạch, phân loại đầu việc và mời đồng
+                    nghiệp.
                   </p>
                 </div>
               </div>
@@ -935,7 +997,8 @@ export const WorkspaceSelector: React.FC = () => {
                 {/* Name */}
                 <div>
                   <label className="block text-xs font-semibold text-[#5C5146] dark:text-[#B5AAA0] mb-1.5">
-                    Tên không gian làm việc <span className="text-rose-500">*</span>
+                    Tên không gian làm việc{" "}
+                    <span className="text-rose-500">*</span>
                   </label>
                   <input
                     id="input-ws-name"
@@ -948,7 +1011,8 @@ export const WorkspaceSelector: React.FC = () => {
                   />
                   {newWsName && (
                     <p className="mt-1 text-[11px] font-mono-data text-[#8E8378]">
-                      Liên kết: kanban.studio/w/{newWsName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}
+                      Liên kết: kanban.studio/w/
+                      {newWsName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}
                     </p>
                   )}
                 </div>
@@ -984,7 +1048,9 @@ export const WorkspaceSelector: React.FC = () => {
                           type="button"
                           onClick={() => setNewWsAccent(item.color)}
                           className={`w-6 h-6 rounded-full transition-transform ${
-                            newWsAccent === item.color ? 'scale-125 ring-2 ring-offset-2 ring-[#2C2723] dark:ring-[#EDE8E1]' : 'hover:scale-110'
+                            newWsAccent === item.color
+                              ? "scale-125 ring-2 ring-offset-2 ring-[#2C2723] dark:ring-[#EDE8E1]"
+                              : "hover:scale-110"
                           }`}
                           style={{ backgroundColor: item.color }}
                           title={item.label}
@@ -1007,8 +1073,8 @@ export const WorkspaceSelector: React.FC = () => {
                         onClick={() => setNewWsIcon(emoji)}
                         className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg transition-all ${
                           newWsIcon === emoji
-                            ? 'bg-[#EFE9E0] dark:bg-[#2E2721] border-2 border-[#8C6B4F] scale-105'
-                            : 'hover:bg-[#EFE9E0] dark:hover:bg-[#201B17]'
+                            ? "bg-[#EFE9E0] dark:bg-[#2E2721] border-2 border-[#8C6B4F] scale-105"
+                            : "hover:bg-[#EFE9E0] dark:hover:bg-[#201B17]"
                         }`}
                       >
                         {emoji}
@@ -1143,7 +1209,7 @@ export const WorkspaceSelector: React.FC = () => {
                     Mã mẫu thử nghiệm nhanh:
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {['DEV-TEAM', 'CREATIVE-99', 'AURA-26'].map((sample) => (
+                    {["DEV-TEAM", "CREATIVE-99", "AURA-26"].map((sample) => (
                       <button
                         key={sample}
                         type="button"
@@ -1219,7 +1285,10 @@ export const WorkspaceSelector: React.FC = () => {
                     type="text"
                     value={editingWorkspace.name}
                     onChange={(e) =>
-                      setEditingWorkspace({ ...editingWorkspace, name: e.target.value })
+                      setEditingWorkspace({
+                        ...editingWorkspace,
+                        name: e.target.value,
+                      })
                     }
                     className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-[#1F1A15] border border-[#E0D7CB] dark:border-[#2C2621] text-xs sm:text-sm text-[#2C2723] dark:text-[#EDE8E1]"
                   />
@@ -1233,7 +1302,10 @@ export const WorkspaceSelector: React.FC = () => {
                     rows={3}
                     value={editingWorkspace.description}
                     onChange={(e) =>
-                      setEditingWorkspace({ ...editingWorkspace, description: e.target.value })
+                      setEditingWorkspace({
+                        ...editingWorkspace,
+                        description: e.target.value,
+                      })
                     }
                     className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-[#1F1A15] border border-[#E0D7CB] dark:border-[#2C2621] text-xs sm:text-sm text-[#2C2723] dark:text-[#EDE8E1]"
                   />

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useProject } from '@/app/context/ProjectProvider';
 import { Priority } from '@/app/types/types';
+import { ISSUE_TYPE_META } from '@/app/lib/issue-type';
 
 export const TableView: React.FC = () => {
   const {
@@ -47,6 +48,7 @@ export const TableView: React.FC = () => {
           <table className="w-full text-left border-collapse text-xs font-sans-ui">
             <thead>
               <tr className="border-b border-[#EAE3D8] dark:border-[#28211A] bg-[#FAF7F2] dark:bg-[#1C1814] text-[#8E8378] dark:text-[#A09386] font-semibold uppercase tracking-wider text-[10px]">
+                <th className="py-3.5 px-3">Mã</th>
                 <th className="py-3.5 px-5 w-1/3">Công việc</th>
                 <th className="py-3.5 px-3">Trạng thái</th>
                 <th className="py-3.5 px-3">Mức độ</th>
@@ -66,6 +68,23 @@ export const TableView: React.FC = () => {
                     className="hover:bg-[#FAF7F2] dark:hover:bg-[#201A15] transition-colors group cursor-pointer"
                     onClick={() => setSelectedTaskId(task.id)}
                   >
+                    {/* Issue type + code */}
+                    <td className="py-3.5 px-3">
+                      <div className="flex items-center gap-1.5 text-[11px] font-mono-data text-[#8E8378]">
+                        {(() => {
+                          const meta = ISSUE_TYPE_META[task.issueType];
+                          const TypeIcon = meta.icon;
+                          return (
+                            <TypeIcon
+                              className="w-3.5 h-3.5 flex-shrink-0"
+                              style={{ color: meta.color }}
+                            />
+                          );
+                        })()}
+                        <span>{task.code ?? "—"}</span>
+                      </div>
+                    </td>
+
                     {/* Task Title */}
                     <td className="py-3.5 px-5 font-medium text-[#2C2723] dark:text-[#EDE8E1]">
                       <div className="flex items-center gap-2.5">

@@ -18,7 +18,8 @@ import {
   FileText
 } from 'lucide-react';
 import { useProject } from '@/app/context/ProjectProvider';
-import { Label, Member, Priority } from '@/app/types/types';
+import { IssueType, Label, Member, Priority } from '@/app/types/types';
+import { ISSUE_TYPE_META, ISSUE_TYPES } from '@/app/lib/issue-type';
 
 export const TaskDetailModal: React.FC = () => {
   const { selectedTask } = useProject();
@@ -40,6 +41,7 @@ const TaskDetailModalContent: React.FC = () => {
     columns,
     members,
     labels,
+    fields,
     addComment,
     themeMode,
     t,
@@ -142,6 +144,39 @@ const TaskDetailModalContent: React.FC = () => {
         {/* Modal Header */}
         <div className="p-4 sm:p-6 pb-3 border-b border-[#EAE3D8] dark:border-[#28211A] flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Issue type selector + code */}
+            <div className="relative">
+              <select
+                value={task.issueType}
+                onChange={(e) =>
+                  updateTask(task.id, { issueType: e.target.value as IssueType })
+                }
+                className="appearance-none pl-7 pr-7 py-1.5 rounded-xl text-xs font-semibold bg-[#EFE9DF] dark:bg-[#251E18] text-[#3D352E] dark:text-[#EDE8E1] border border-[#DDD3C3] dark:border-[#382E25] outline-none cursor-pointer hover:border-[#8C6B4F]"
+              >
+                {ISSUE_TYPES.map((it) => (
+                  <option key={it} value={it}>
+                    {language === "vi" ? ISSUE_TYPE_META[it].label : ISSUE_TYPE_META[it].labelEn}
+                  </option>
+                ))}
+              </select>
+              {(() => {
+                const TypeIcon = ISSUE_TYPE_META[task.issueType].icon;
+                return (
+                  <TypeIcon
+                    className="w-3.5 h-3.5 absolute left-2.5 top-2 pointer-events-none"
+                    style={{ color: ISSUE_TYPE_META[task.issueType].color }}
+                  />
+                );
+              })()}
+              <ChevronDown className="w-3.5 h-3.5 text-[#8E8378] absolute right-2 top-2.5 pointer-events-none" />
+            </div>
+
+            {task.code && (
+              <span className="text-xs font-mono-data text-[#9E9082]">
+                {task.code}
+              </span>
+            )}
+
             {/* Column badge */}
             <div className="relative">
               <select
@@ -362,6 +397,82 @@ const TaskDetailModalContent: React.FC = () => {
               />
             </div>
           </div>
+
+          {/* Custom Fields (per-board field definitions) */}
+          {fields.filter((f) => !f.isHidden).length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 p-4 rounded-2xl bg-[#FAF6F0] dark:bg-[#1E1915] border border-[#E8E1D5] dark:border-[#2F2720] text-xs font-sans-ui">
+              {fields
+                .filter((f) => !f.isHidden)
+                .map((field) => {
+                  const options = Array.isArray(
+                    (field.config as { options?: string[] })?.options,
+                  )
+                    ? ((field.config as { options?: string[] }).options ?? [])
+                    : [];
+                  const value = task.customFields[field.id];
+                  const setValue = (v: unknown) =>
+                    updateTask(task.id, {
+                      customFields: { ...task.customFields, [field.id]: v },
+                    });
+
+                  return (
+                    <div key={field.id} className="space-y-1">
+                      <span className="text-[10px] font-semibold text-[#8E8378] dark:text-[#A09386] uppercase tracking-wider truncate block">
+                        {field.name}
+                      </span>
+                      {field.type === 'TEXT' && (
+                        <input
+                          type="text"
+                          value={(value as string) ?? ''}
+                          onChange={(e) => setValue(e.target.value)}
+                          className="w-full bg-white dark:bg-[#221C16] border border-[#DDD3C3] dark:border-[#382E25] rounded-xl px-2.5 py-1 text-xs text-[#2C2723] dark:text-[#EDE8E1] outline-none focus:border-[#8C6B4F]"
+                        />
+                      )}
+                      {field.type === 'NUMBER' && (
+                        <input
+                          type="number"
+                          value={(value as number) ?? ''}
+                          onChange={(e) =>
+                            setValue(e.target.value === '' ? '' : Number(e.target.value))
+                          }
+                          className="w-full bg-white dark:bg-[#221C16] border border-[#DDD3C3] dark:border-[#382E25] rounded-xl px-2.5 py-1 text-xs text-[#2C2723] dark:text-[#EDE8E1] outline-none focus:border-[#8C6B4F]"
+                        />
+                      )}
+                      {field.type === 'DATE' && (
+                        <input
+                          type="date"
+                          value={(value as string) ?? ''}
+                          onChange={(e) => setValue(e.target.value)}
+                          className="w-full bg-white dark:bg-[#221C16] border border-[#DDD3C3] dark:border-[#382E25] rounded-xl px-2.5 py-1 text-xs text-[#2C2723] dark:text-[#EDE8E1] outline-none focus:border-[#8C6B4F]"
+                        />
+                      )}
+                      {field.type === 'CHECKBOX' && (
+                        <input
+                          type="checkbox"
+                          checked={Boolean(value)}
+                          onChange={(e) => setValue(e.target.checked)}
+                          className="w-4 h-4 rounded accent-[#8C6B4F]"
+                        />
+                      )}
+                      {field.type === 'SELECT' && (
+                        <select
+                          value={(value as string) ?? ''}
+                          onChange={(e) => setValue(e.target.value)}
+                          className="w-full bg-white dark:bg-[#221C16] border border-[#DDD3C3] dark:border-[#382E25] rounded-xl px-2.5 py-1 text-xs text-[#2C2723] dark:text-[#EDE8E1] outline-none focus:border-[#8C6B4F]"
+                        >
+                          <option value="">—</option>
+                          {options.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          )}
 
           {/* Description & Work Notes Section */}
           <div className="space-y-2.5">

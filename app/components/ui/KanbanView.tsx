@@ -21,14 +21,14 @@ export const KanbanView: React.FC = () => {
 
   return (
     <div className="flex-1 overflow-x-auto p-4 sm:p-8 select-none">
-      <div className="flex items-start gap-5 pb-8 min-h-[calc(100vh-180px)]">
+      <div className="flex items-stretch gap-5 pb-8 h-[calc(100vh-180px)]">
         {/* Render Columns */}
         {columns.map((column) => (
           <KanbanColumn key={column.id} column={column} />
         ))}
 
         {/* Add New Column Button / Composer */}
-        <div className="w-72 sm:w-80 flex-shrink-0">
+        <div className="w-72 sm:w-80 flex-shrink-0 self-start">
           {isAddingColumn ? (
             <form
               onSubmit={handleAddColumnSubmit}

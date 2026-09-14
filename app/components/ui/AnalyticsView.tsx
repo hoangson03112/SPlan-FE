@@ -18,13 +18,10 @@ export const AnalyticsView: React.FC = () => {
   const boardTasks = tasks.filter((t) => t.boardId === activeBoard.id);
   const totalTasks = boardTasks.length;
 
-  const lastColumnId = columns[columns.length - 1]?.id;
-  const completedTasks = boardTasks.filter(
-    (t) =>
-      t.columnId === lastColumnId ||
-      t.columnId.includes("5") ||
-      t.columnId.includes("done"),
+  const doneColumnIds = new Set(
+    columns.filter((c) => c.group === "DONE").map((c) => c.id),
   );
+  const completedTasks = boardTasks.filter((t) => doneColumnIds.has(t.columnId));
 
   const completionRate =
     totalTasks > 0 ? Math.round((completedTasks.length / totalTasks) * 100) : 0;
@@ -35,9 +32,7 @@ export const AnalyticsView: React.FC = () => {
   const overdueTasks = boardTasks.filter((task) => {
     if (!task.dueDate) return false;
     const due = new Date(task.dueDate);
-    const isDone =
-      task.columnId.includes("done") || task.columnId.includes("5");
-    return !isDone && due < today;
+    return !doneColumnIds.has(task.columnId) && due < today;
   });
 
   // Priority counts

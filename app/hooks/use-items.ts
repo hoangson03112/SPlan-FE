@@ -16,6 +16,7 @@ export function useItems(listId: string) {
     queryKey: itemsQueryKey(listId),
     queryFn: () => itemService.getItemsByList(listId),
     enabled: Boolean(listId),
+    select: (data) => data.items,
   });
 }
 
